@@ -11,7 +11,7 @@ using namespace std;
  * a simplified generic singly linked list class to illustrate C++ concepts
  * @author Jon Beck
  * @author Garland Johnson
- * @version 14 February 2017
+ * @version 15 February 2017
  */
 template< typename Object >
 class List
@@ -45,41 +45,86 @@ public:
      * the copy constructor
      */
     List( const List& rhs )
+        :size{ 0 }, first{ nullptr }, last{ nullptr }
     {
-        size = 0;
-        first = last = nullptr;
-        Node* list_iterator = rhs.first;
+        count = 0;
+        // Node* list_iterator = rhs.first;
 
-/** for loop grabs data from original list and uses existing push_front function
+/** for loop grabs data from original list and uses a new function, push_back
  * to populate the new linked list with the original's data members.
  */
-        for( uint i = 0; i < rhs.size; i++ )
+        for( auto list_iterator = rhs.first; list_iterator != nullptr;
+             list_iterator = list_iterator->next )
         {
+            count++;
             push_back( list_iterator->data );
-            list_iterator = list_iterator->next;
+            count++;
         }
     }
 
-    void swap( List& rhs )
-    {
-        auto t_size = size;
-        auto t_first = first;
-        auto t_last = last;
+    /*swap written to allow a list to be copied into itself.(...and then
+     * commented out, code left in to potentially reuse)
+     *
+     *
+     *
+     * void swap( List& rhs )
+     * {
+     *  auto t_size = size;
+     *  auto t_first = first;
+     *  auto t_last = last;
+     *
+     *  size = rhs.size;
+     *  first = rhs.first;
+     *  last = rhs.last;
+     *
+     *  rhs.size = t_size;
+     *  rhs.first = t_first;
+     *  rhs.last = t_last;
+     * }
+     *
+     * operator= uses List constructor to avoid uneccessary code and written
+     * swap
+     * function. to copy one list into another.
+     * --code left in to potentially reuse, after reading the prompt again,
+     * definately the wrong way to complete assignment--
+     *
+     * List& operator=( const List& rhs )
+     * {
+     *  List new_list( rhs );
+     *  swap( new_list );
+     *
+     *  return *this;
+     * }
+     */
 
-        size = rhs.size;
-        first = rhs.first;
-        last = rhs.last;
-
-        rhs.size = t_size;
-        rhs.first = t_first;
-        rhs.last = t_last;
-    }
-
+    // operator= method safe to copy a list to itself.
     List& operator=( const List& rhs )
     {
-        List new_list( rhs );
-        swap( new_list );
+        /*check to see if the first node of rhs = to first node of list, if it
+         * is then a copy of itself is being made and rhs is returned.
+         * if not set up in this manner gives "control reaches end of non-void
+         * function"
+         */
+        count = 0;
+        if( rhs.first != first )
+        {
+            while( !is_empty( ) )
+            {
+                pop_front( );
+                count++;
+            }
+            for( auto list_iterator = rhs.first; list_iterator != nullptr;
+                 list_iterator = list_iterator->next )
+            {
+                count++;
+                push_back( list_iterator->data );
+            }
+        }
 
+        /* if not a copy of itself, iterate through list to remove nodes and
+         * push nodes from list onto back of new list. Code modified from
+         * original list constructor and used in operator=
+         */
         return *this;
     }
 
@@ -112,32 +157,42 @@ public:
      */
     void push_front( const Object& item )
     {
+        count = 0;
         /** Function first checks the first node to see if the list is empty
          * if the list is empty it sets the first and last node pointers to the
          * created Node.
          */
+
         if( first == nullptr )
         {
-            last = first = new Node( item );
+            last = first = new Node { item };
         }
         /** If list is not empty create new node and insert before first node
          * pointing to the old "first Node" (now second node).
          */
         else
         {
-            Node* new_node = new Node( item );
+            count++;
+            Node* new_node = new Node { item };
             new_node->next = first;
+
             first = new_node;
         }
         size++;
+        count++;
     }
 
+    /**
+     * Put a new element onto the end of the list
+     * @param item the data the new element will contain
+     */
     void push_back( const Object& item )
     {
         /** Function first checks the first node to see if the list is empty
          * if the list is empty it sets the first and last node pointers to the
          * created Node.
          */
+        count = 0;
         if( first == nullptr )
         {
             last = first = new Node { item };
@@ -152,6 +207,7 @@ public:
             last = new_node;
         }
         size++;
+        count++;
     }
 
     /**
@@ -205,21 +261,7 @@ public:
      */
     bool is_empty( ) const
     {
-        /**
-         * checks first pointer to check empty status, otherwise returns "not
-         * empty"
-         */
-        bool empty;
-        if( first == nullptr )
-        {
-            empty = true;
-        }
-        else
-        {
-            empty = false;
-        }
-
-        return empty;
+        return size == 0;
     }
 
     /**
@@ -242,10 +284,16 @@ public:
         return buffer.str( );
     }
 
+    uint get_count( )
+    {
+        return count;
+    }
+
 private:
     uint size;
     Node* first;
     Node* last;
+    uint count;
 };
 
 #endif
